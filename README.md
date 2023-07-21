@@ -13,3 +13,6 @@ If using conda, run the command:
 ```
 conda install -c bioconda snakemake
 ```
+## Project Focus
+
+Rhizosphere to Root Exudate interaction and phylogenetic analysis comparing Illumina Mysiq short read vs ONT MinION long read sequences.
