@@ -16,3 +16,5 @@ conda install -c bioconda snakemake
 ## Project Focus
 
 Rhizosphere to Root Exudate interaction and phylogenetic analysis comparing Illumina Mysiq short read vs ONT MinION long read sequences.
+
+A Sainsbury's Undergraduate Studentship funded by the Gatsby Foundation
