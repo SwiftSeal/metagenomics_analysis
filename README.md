@@ -1,2 +1,9 @@
-# metagenomics_analysis
-All code used for Lia Frost's Gatsby summer project 2023
+# Metagenomics analysis
+
+Hello!
+
+This repository contains all the code and stuff used during the 16s metagenomics analysis.
+
+## Prerequisites
+
+This pipeline utilises [snakemake](snakemake.readthedocs.io) yadayada
