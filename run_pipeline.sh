@@ -8,4 +8,6 @@
 #SBATCH -o snakemake.%j.out
 #SBATCH -e snakemake.%j.err
 
+source activate snakemake
+
 snakemake --conda-frontend conda --profile ~/slurm/
