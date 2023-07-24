@@ -9,10 +9,11 @@ rule dorado_basecall:
         bam = "results/dorado/output.bam"
     threads: 4
     params:
-        model = config["dorado_model"]
+        model = config["dorado_model"],
+        dorado = config["dorado_path"]
     resources:
         mem_mb = 8000
     shell:
         """
-
+        {params.dorado} basecaller -r {params.model} {input.read_dir} > {output.bam}
         """
