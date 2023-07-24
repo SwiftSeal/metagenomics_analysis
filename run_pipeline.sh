@@ -10,4 +10,4 @@
 
 source activate snakemake
 
-snakemake --conda-frontend conda --profile ~/slurm/
+snakemake --conda-frontend conda --profile ~/.config/snakemake/slurm
