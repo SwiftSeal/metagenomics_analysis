@@ -2,18 +2,38 @@
 
 configfile: "config/config.yml"
 
+rule all:
+    input: "results/dorado/output.bam"
+
+
 rule dorado_basecall:
-    input:
-        read_dir = config["raw_data_dir"]
     output:
         bam = "results/dorado/output.bam"
     threads: 4
     params:
+        input_dir = config["raw_data_dir"],
         model = config["dorado_model"],
         dorado = config["dorado_path"]
+    resources:
+        mem_mb = 8000,
+        partition = "gpu",
+        slurm = "gpus=1"
+    shell:
+        """
+        {params.dorado} basecaller -r {params.model} {params.input_dir} > {output.bam}
+        """
+
+rule dorado_summary:
+    input:
+        "results/dorado/output.bam"
+    output:
+        "results/dorado/summary.txt"
+    params:
+        dorado = config["dorado_path"]
+    threads: 1
     resources:
         mem_mb = 8000
     shell:
         """
-        {params.dorado} basecaller -r {params.model} {input.read_dir} > {output.bam}
+        # put your code here!
         """
