@@ -22,3 +22,18 @@ rule dorado_basecall:
         """
         {params.dorado} basecaller -r {params.model} {params.input_dir} > {output.bam}
         """
+
+rule dorado_summary:
+    input:
+        "results/dorado/output.bam"
+    output:
+        "results/dorado/summary.txt"
+    params:
+        dorado = config["dorado_path"]
+    threads: 1
+    resources:
+        mem_mb = 8000
+    shell:
+        """
+        # put your code here!
+        """
