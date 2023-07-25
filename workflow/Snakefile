@@ -3,7 +3,7 @@
 configfile: "config/config.yml"
 
 rule all:
-    input: "results/dorado/output.bam"
+    input: "results/dorado/summary.txt"
 
 
 rule dorado_basecall:
