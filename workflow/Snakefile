@@ -3,7 +3,7 @@
 configfile: "config/config.yml"
 
 rule all:
-    input: "results/dorado/output.bam"
+    input: "results/dorado/summary.txt"
 
 
 rule dorado_basecall:
@@ -35,5 +35,5 @@ rule dorado_summary:
         mem_mb = 8000
     shell:
         """
-        # put your code here!
+        {params.dorado} summary {input} > {output}
         """
