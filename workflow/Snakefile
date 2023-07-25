@@ -35,5 +35,5 @@ rule dorado_summary:
         mem_mb = 8000
     shell:
         """
-        # put your code here!
+        {params.dorado} summary {input} > {output}
         """
