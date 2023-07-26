@@ -37,3 +37,33 @@ rule dorado_summary:
         """
         {params.dorado} summary {input} > {output}
         """
+
+rule sort_bam:
+    input:
+        "results/dorado/output.bam"
+    output:
+        "results/dorado/output.sorted.bam"
+    conda:
+        "envs/readtools.yml"
+    threads: 16
+    resources:
+        mem_mb = 16000
+    shell:
+        """
+        samtools sort -@ {threads} -o {output} {input}
+        """
+
+rule nanoplot:
+    input:
+        "results/dorado/output.sorted.bam"
+    output:
+        "results/nanoplot/sequencing_summary.txt"
+    conda:
+        "envs/readtools.yml"
+    threads: 8
+    resources:
+        mem_mb = 16000
+    shell:
+        """
+        NanoPlot --bam {input} --outdir results/nanoplot
+        """
