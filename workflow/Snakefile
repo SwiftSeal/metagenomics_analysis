@@ -3,7 +3,9 @@
 configfile: "config/config.yml"
 
 rule all:
-    input: "results/dorado/summary.txt"
+    input:
+        "results/dorado/summary.txt",
+        "results/nanoplot/sequencing_summary.txt"
 
 
 rule dorado_basecall:
@@ -65,5 +67,5 @@ rule nanoplot:
         mem_mb = 16000
     shell:
         """
-        NanoPlot --bam {input} --outdir results/nanoplot
+        NanoPlot -t {threads} --bam {input} --outdir results/nanoplot
         """
