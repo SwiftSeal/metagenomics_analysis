@@ -4,8 +4,7 @@ configfile: "config/config.yml"
 
 rule all:
     input:
-        "results/dorado/summary.txt",
-        "results/nanoplot/sequencing_summary.txt"
+        "results/barcoding_summary.txt"
 
 
 rule dorado_basecall:
@@ -25,26 +24,11 @@ rule dorado_basecall:
         {params.dorado} basecaller -r {params.model} {params.input_dir} > {output.bam}
         """
 
-rule dorado_summary:
-    input:
-        "results/dorado/output.bam"
-    output:
-        "results/dorado/summary.txt"
-    params:
-        dorado = config["dorado_path"]
-    threads: 1
-    resources:
-        mem_mb = 8000
-    shell:
-        """
-        {params.dorado} summary {input} > {output}
-        """
-
 rule sort_bam:
     input:
         "results/dorado/output.bam"
     output:
-        "results/dorado/output.sorted.bam"
+        "results/dorado/sorted/output.sorted.bam"
     conda:
         "envs/readtools.yml"
     threads: 16
@@ -55,17 +39,17 @@ rule sort_bam:
         samtools sort -@ {threads} -o {output} {input}
         """
 
-rule nanoplot:
+rule debarcode:
     input:
-        "results/dorado/output.sorted.bam"
+        "results/dorado/sorted/output.sorted.bam"
     output:
-        "results/nanoplot/sequencing_summary.txt"
-    conda:
-        "envs/readtools.yml"
-    threads: 8
+        "results/barcoding_summary.txt"
+    threads: 4
     resources:
-        mem_mb = 16000
+        mem_mb = 450000
+        partition = "gpu",
+        slurm = "gpus=1"
     shell:
         """
-        NanoPlot -t {threads} --bam {input} --outdir results/nanoplot
+        $APPS/ont-guppy/bin/guppy_barcoder -i results/dorado/sorted/ --save_path results/debarcoded/ --barcode_kits SQK-NBD114-24 -t 4 -q 0 --enable_trim_barcodes
         """
