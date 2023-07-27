@@ -4,7 +4,8 @@ configfile: "config/config.yml"
 
 rule all:
     input:
-        "results/barcoding_summary.txt"
+        "results/barcoding_summary.txt",
+        expand("results/debarcoded/barcode{barcode}/readID.txt", barcode = config["barcodes"])
 
 
 rule dorado_basecall:
@@ -43,13 +44,40 @@ rule debarcode:
     input:
         "results/dorado/sorted/output.sorted.bam"
     output:
-        "results/barcoding_summary.txt"
+        "results/barcoding_summary.txt",
+        expand("results/debarcoded/barcode{barcode}/fastq_runid_unknown_0.fastq", barcode = config["barcodes"])
     threads: 4
     resources:
-        mem_mb = 450000
+        mem_mb = 450000,
         partition = "gpu",
         slurm = "gpus=1"
     shell:
         """
         $APPS/ont-guppy/bin/guppy_barcoder -i results/dorado/sorted/ --save_path results/debarcoded/ --barcode_kits SQK-NBD114-24 -t 4 -q 0 --enable_trim_barcodes
+        """
+
+rule extract_readID:
+    input:
+        "results/debarcoded/barcode{barcode}/fastq_runid_unknown_0.fastq"
+    output:
+        "results/debarcoded/barcode{barcode}/readID.txt"
+    threads: 1
+    resources:
+        mem_mb = 2000
+    run:
+        for record in SeqIO.parse(input[0], "fastq"):
+            with open(output[0], "a") as f:
+                f.write(record.id + "\n")
+
+rule pod5_filter:
+    input:
+        "results/debarcoded/barcode{barcode}/readID.txt"
+    output:
+        "results/debarcoded/pod5/{barcode}.pod5"
+    threads: 1
+    resources:
+        mem_mb = 8000
+    shell:
+        """
+        pod5 filter -r /mnt/shared/projects/jhi/soil-ecology/202307_root2res-pilot-ONT --ids {input} --output {output}
         """
