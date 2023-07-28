@@ -1,14 +1,15 @@
 # this is the snakemake pipeline for analysis the metagenomic data
 
+from Bio import SeqIO
+
 configfile: "config/config.yml"
 
 BARCODES = ["barcode01", "barcode02", "barcode03", "barcode04", "barcode05", "barcode06"]
 
 rule all:
     input:
-        "results/barcoding_summary.txt",
+        "results/debarcoded/barcoding_summary.txt",
         expand("results/debarcoded/duplex/{barcode}.fastq", barcode = BARCODES)
-
 
 rule dorado_basecall:
     output:
@@ -47,7 +48,7 @@ rule debarcode:
         "results/dorado/sorted/output.sorted.bam"
     output:
         "results/debarcoded/barcoding_summary.txt",
-        "results/debarcoded/{barcode}/fastq_runid_unknown_0.fastq"
+        expand("results/debarcoded/{barcode}/fastq_runid_unknown_0.fastq", barcode = BARCODES)
     threads: 4
     resources:
         mem_mb = 450000,
