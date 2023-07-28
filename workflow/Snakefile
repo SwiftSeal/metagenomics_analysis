@@ -47,7 +47,7 @@ rule debarcode:
         "results/dorado/sorted/output.sorted.bam"
     output:
         "results/debarcoded/barcoding_summary.txt",
-        expand("results/debarcoded/barcode{barcode}/fastq_runid_unknown_0.fastq", barcode = config["barcodes"])
+        "results/debarcoded/{barcode}/fastq_runid_unknown_0.fastq"
     threads: 4
     resources:
         mem_mb = 450000,
