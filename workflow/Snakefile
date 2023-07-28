@@ -66,7 +66,8 @@ rule extract_readID:
         "results/debarcoded/{barcode}/readID.txt"
     threads: 1
     resources:
-        mem_mb = 2000
+        mem_mb = 2000,
+        partition = "short"
     run:
         for record in SeqIO.parse(input[0], "fastq"):
             with open(output[0], "a") as f:
