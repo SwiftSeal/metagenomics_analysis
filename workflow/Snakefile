@@ -2,10 +2,12 @@
 
 configfile: "config/config.yml"
 
+BARCODES = ["barcode01", "barcode02", "barcode03", "barcode04", "barcode05", "barcode06"]
+
 rule all:
     input:
         "results/barcoding_summary.txt",
-        expand("results/debarcoded/barcode{barcode}/readID.txt", barcode = config["barcodes"])
+        expand("results/debarcoded/duplex/{barcode}.fastq", barcode = BARCODES)
 
 
 rule dorado_basecall:
@@ -44,7 +46,7 @@ rule debarcode:
     input:
         "results/dorado/sorted/output.sorted.bam"
     output:
-        "results/barcoding_summary.txt",
+        "results/debarcoded/barcoding_summary.txt",
         expand("results/debarcoded/barcode{barcode}/fastq_runid_unknown_0.fastq", barcode = config["barcodes"])
     threads: 4
     resources:
@@ -58,9 +60,9 @@ rule debarcode:
 
 rule extract_readID:
     input:
-        "results/debarcoded/barcode{barcode}/fastq_runid_unknown_0.fastq"
+        "results/debarcoded/{barcode}/fastq_runid_unknown_0.fastq"
     output:
-        "results/debarcoded/barcode{barcode}/readID.txt"
+        "results/debarcoded/{barcode}/readID.txt"
     threads: 1
     resources:
         mem_mb = 2000
@@ -71,7 +73,7 @@ rule extract_readID:
 
 rule pod5_filter:
     input:
-        "results/debarcoded/barcode{barcode}/readID.txt"
+        "results/debarcoded/{barcode}/readID.txt"
     output:
         "results/debarcoded/pod5/{barcode}.pod5"
     threads: 1
@@ -80,4 +82,22 @@ rule pod5_filter:
     shell:
         """
         pod5 filter -r /mnt/shared/projects/jhi/soil-ecology/202307_root2res-pilot-ONT --ids {input} --output {output}
+        """
+    
+rule duplex:
+    input:
+        "results/debarcoded/pod5/{barcode}.pod5"
+    output:
+        "results/debarcoded/duplex/{barcode}.fastq"
+    threads: 8
+    params:
+        dorado = config["dorado_path"],
+        model = config["dorado_model"]
+    resources:
+        mem_mb = 128000,
+        partition = "gpu",
+        slurm = "gpus=2"
+    shell:
+        """
+        {params.dorado} duplex --emite_fastq {params.model} {input} > {output}
         """
