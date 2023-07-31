@@ -58,17 +58,34 @@ were then barcoded using the ONT Barcoding Kit 24 with V14 chemistry. Sequenced 
 ## Pipeline Steps
 
 1. Base Calling with Dorado (rule dorado_basecall)
+
 This rule utilizes Dorado, a basecalling software specifically optimized for Oxford Nanopore data. Basecalling is the process of converting raw signal data produced by the sequencer into nucleotide sequences (A, T, C, G). This step outputs a BAM file, a binary version of SAM (Sequence Alignment/Map) file that stores the nucleotide sequence data.
+
+
 2. Sorting BAM File (rule sort_bam)
+
 The BAM file generated in the previous step is then sorted using SAMtools. Sorting ensures that the alignments in the BAM file are ordered by their position in the reference genome, which is crucial for downstream analyses.
+
+
 3. Debarcoding (rule debarcode)
+
 Debarcoding is the process of identifying and separating reads according to their attached barcodes. This pipeline uses Guppy, the basecalling and demultiplexing software from Oxford Nanopore Technologies. The output is a set of fastq files, each corresponding to a different barcode.
+
+
 4. Extracting Read IDs (rule extract_readID)
+
 This step extracts the unique identifiers for each read from the fastq files and writes them into a separate text file. This allows for tracking and manipulating individual reads in downstream analyses.
+
+
 5. Filtering Reads with Pod5 (rule pod5_filter)
+
 Pod5 is a bioinformatics tool used for filtering and manipulating nanopore sequencing data. Here, it's used to filter the reads based on certain criteria (not explicitly defined in your pipeline).
+
+
 6. Duplex Sequencing (rule duplex)
+
 The duplex sequencing step uses Dorado again to generate duplex consensus sequences from the filtered reads. Duplex sequencing is a method that significantly improves the accuracy of sequencing data by sequencing both strands of the original DNA molecule.
+
 
 ## Final Note
 Remember, this pipeline was designed to run in a SLURM environment. To allow snakemake to interact with the SLURM job manager to submit jobs, you'll need to use a Snakemake profile for SLURM, which can be set up as instructed in the Prerequisites section.
