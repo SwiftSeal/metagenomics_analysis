@@ -21,8 +21,9 @@ conda env create -f base_environment.yml
 This will create an environment `snakemake` which should have everything you need installed.
 It is automatically activated in the `run_snakemake.sh` script.
 This pipeline was designed to run in a SLURM environment.
-To allow snakemake to interact with the SLURM job manager to submit jobs, you'll need to use [cookiecutter](https://pypi.org/project/cookiecutter/):
-This will allow you to build a job template which snakemake will use to wrap around each rule allowing it to be submitted as a SLURM job. To build a profile suitable for SLURM, run the following commands:
+To allow snakemake to interact with the SLURM job manager to submit jobs, you'll need to use [cookiecutter](https://pypi.org/project/cookiecutter/).
+This will allow you to build a job template which snakemake will use to wrap around each rule allowing it to be submitted as a SLURM job.
+To build a profile suitable for SLURM, run the following commands:
 
 ```
 # Create a snakemake directory in user config
@@ -36,57 +37,53 @@ cookiecutter https://github.com/Snakemake-Profiles/slurm.git
 
 ## Experimental Background
 
-The samples used in this pipeline were taken from barley
-(Hordeum) plants, specifically the Barke variety, grown in a glasshouse under a
-temperature regime of 18/14 °C (day/night) with 16 hours of daylight. The
-growth period lasted until stem elongation (approximately 5 weeks,
-corresponding to Zadoks stages 30-35). The soil originated from a farm field in
-Dundee, Scotland.
+The samples used in this pipeline were taken from barley (Hordeum) plants, specifically the Barke variety, grown in a glasshouse under a temperature regime of 18/14 °C (day/night) with 16 hours of daylight.
+The growth period lasted until stem elongation (approximately 5 weeks, corresponding to Zadoks stages 30-35).
+The soil originated from a farm field in Dundee, Scotland.
 
-There were six soil samples in total: four from barley grown in the
-glasshouse and two bulk soil samples from the farm field. These six samples
-correspond to six barcodes used in the pipeline, but the pipeline can be
-adapted for any number of samples up to 24, which is the maximum number
+There were six soil samples in total: four from barley grown in the glasshouse and two bulk soil samples from the farm field.
+These six samples correspond to six barcodes used in the pipeline, but the pipeline can be adapted for any number of samples up to 24, which is the maximum number
 included in the Native Barcoding Kit from Oxford Nanopore.
 
-The DNA from the soil samples was extracted and washed using the
-DNeasy PowerSoil Pro Kit (as of May 2019). Amplification of the 16S rRNA gene
-was achieved using the New England Biolabs 27FCM (single degenerate) forward
-primer and 1492R reverse primer, with a 30-cycle PCR. The amplified products
-were then barcoded using the ONT Barcoding Kit 24 with V14 chemistry. Sequenced on ONT MinION.
+The DNA from the soil samples was extracted using the DNeasy PowerSoil Pro Kit (as of May 2019).
+Amplification of the 16S rRNA gene was achieved using the New England Biolabs 27FCM (single degenerate) forward primer and 1492R reverse primer with a 30-cycle PCR. The amplified products were then barcoded using the ONT Barcoding Kit 24 with V14 chemistry and Sequenced on ONT MinION.
  
 ## Pipeline Steps
 
-1. Base Calling with Dorado (rule dorado_basecall)
+###  Base Calling with Dorado (rule dorado_basecall)
 
-This rule utilizes Dorado, a basecalling software specifically optimized for Oxford Nanopore data. Basecalling is the process of converting raw signal data produced by the sequencer into nucleotide sequences (A, T, C, G). This step outputs a BAM file, a binary version of SAM (Sequence Alignment/Map) file that stores the nucleotide sequence data.
+This rule utilizes Dorado, a basecalling software developed for Oxford Nanopore data.
+Basecalling is the process of converting raw signal data produced by the sequencer into nucleotide sequences (A, T, C, G).
+This step outputs a BAM file, a binary version of SAM (Sequence Alignment/Map) file that stores the nucleotide sequence data and read qualities.
+
+### Sorting BAM File (rule sort_bam)
+
+The BAM file generated in the previous step is then sorted using SAMtools.
+Sorting ensures that the alignments in the BAM file are ordered by their position in the reference genome, which is crucial for downstream analyses.
+
+### Debarcoding (rule debarcode)
+
+Debarcoding is the process of identifying and separating reads according to their attached barcodes.
+This pipeline uses Guppy, the basecalling and demultiplexing software from Oxford Nanopore Technologies.
+The output is a set of fastq files, each corresponding to a different barcode.
+
+### Extracting Read IDs (rule extract_readID)
+
+This step extracts the unique identifiers for each read from the fastq files and writes them into a separate text file.
+This allows for tracking and manipulating barcoded reads in downstream analyses.
+
+### Filtering Reads with Pod5 (rule pod5_filter)
+
+Pod5 is a toolkit used for filtering and manipulating nanopore pod5 data.
+Here, it's used to filter the reads based on the extracted Read IDs from the debarcoded reads for the purposed of duplex basecalling.
 
 
-2. Sorting BAM File (rule sort_bam)
+### Duplex Sequencing (rule duplex)
 
-The BAM file generated in the previous step is then sorted using SAMtools. Sorting ensures that the alignments in the BAM file are ordered by their position in the reference genome, which is crucial for downstream analyses.
-
-
-3. Debarcoding (rule debarcode)
-
-Debarcoding is the process of identifying and separating reads according to their attached barcodes. This pipeline uses Guppy, the basecalling and demultiplexing software from Oxford Nanopore Technologies. The output is a set of fastq files, each corresponding to a different barcode.
-
-
-4. Extracting Read IDs (rule extract_readID)
-
-This step extracts the unique identifiers for each read from the fastq files and writes them into a separate text file. This allows for tracking and manipulating individual reads in downstream analyses.
-
-
-5. Filtering Reads with Pod5 (rule pod5_filter)
-
-Pod5 is a bioinformatics tool used for filtering and manipulating nanopore sequencing data. Here, it's used to filter the reads based on certain criteria (not explicitly defined in your pipeline).
-
-
-6. Duplex Sequencing (rule duplex)
-
-The duplex sequencing step uses Dorado again to generate duplex consensus sequences from the filtered reads. Duplex sequencing is a method that significantly improves the accuracy of sequencing data by sequencing both strands of the original DNA molecule.
-
+The duplex sequencing step uses Dorado again to generate duplex consensus sequences from the filtered reads.
+Duplex sequencing is a method that significantly improves the accuracy of sequencing data by sequencing both strands of the original DNA molecule.
 
 ## Final Note
-Remember, this pipeline was designed to run in a SLURM environment. To allow snakemake to interact with the SLURM job manager to submit jobs, you'll need to use a Snakemake profile for SLURM, which can be set up as instructed in the Prerequisites section.
+Remember, this pipeline was designed to run in a SLURM environment.
+To allow snakemake to interact with the SLURM job manager to submit jobs, you'll need to use a Snakemake profile for SLURM, which can be set up as instructed in the Prerequisites section.
 
