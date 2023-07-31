@@ -8,7 +8,6 @@ BARCODES = ["barcode01", "barcode02", "barcode03", "barcode04", "barcode05", "ba
 
 rule all:
     input:
-        "results/debarcoded/barcoding_summary.txt",
         expand("results/debarcoded/duplex/{barcode}.fastq", barcode = BARCODES)
 
 rule dorado_basecall:
@@ -72,12 +71,14 @@ rule extract_readID:
         for record in SeqIO.parse(input[0], "fastq"):
             with open(output[0], "a") as f:
                 f.write(record.id + "\n")
+        
+        print("Done") # seems to crash without this?
 
 rule pod5_filter:
     input:
         "results/debarcoded/{barcode}/readID.txt"
     output:
-        "results/debarcoded/pod5/{barcode}.pod5"
+        "results/debarcoded/pod5/{barcode}/{barcode}.pod5"
     threads: 1
     resources:
         mem_mb = 8000
@@ -88,7 +89,7 @@ rule pod5_filter:
     
 rule duplex:
     input:
-        "results/debarcoded/pod5/{barcode}.pod5"
+        "results/debarcoded/pod5//{barcode}/{barcode}.pod5"
     output:
         "results/debarcoded/duplex/{barcode}.fastq"
     threads: 8
