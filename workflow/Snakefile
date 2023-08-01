@@ -1,6 +1,7 @@
 # this is the snakemake pipeline for analysis the metagenomic data
 
 from Bio import SeqIO
+from Bio.SeqUtils import GC
 
 configfile: "config/config.yml"
 
@@ -104,3 +105,47 @@ rule duplex:
         """
         {params.dorado} duplex --emite_fastq {params.model} {input} > {output}
         """
+
+rule duplex_statistics:
+    input:
+        fastq = "results/debarcoded/duplex/{barcode}.fastq"
+    output:
+        stats = "results/debarcoded/duplex/{barcode}.stats"
+    threads: 1
+    resources:
+        mem_mb = 2000,
+        partition = "short"
+    run:
+        with open(input.fastq) as f, open(output.stats, "w") as o:
+            # write the header
+            o.write("barcode\tlength\tGC\tQ_score\n")
+
+            # iterate through fastq file and calculate summary stats
+            for record in SeqIO.parse(f, "fastq"):
+                length = len(record.seq)
+                GC = GC(record.seq)
+                Q_score = sum(record.letter_annotations["phred_quality"]) / length
+
+                # write record stats to file
+                o.write(f"{wildcards.barcode}\t{length}\t{GC}\t{Q_score}\n")
+
+rule plot_duplex_stats:
+    input:
+        expand("results/debarcoded/duplex/{barcode}.stats", barcode = BARCODES)
+    output:
+        "results/figures/duplex_stats.png"
+    run:
+        # merge all stats files into one dataframe
+        df = pd.concat([pd.read_csv(f, sep = "\t") for f in input])
+
+        # filter any reads < 500bp or > 3000bp
+        df = df[(df["length"] > 500) & (df["length"] < 3000)]
+
+        # plot three subplots - kde of length, GC and Q_score
+        fig, ax = plt.subplots(3, 1, figsize = (5, 5))
+        sns.kdeplot(data = df, x = "length", hue = "barcode", ax = ax[0])
+        sns.kdeplot(data = df, x = "GC", hue = "barcode", ax = ax[1])
+        sns.kdeplot(data = df, x = "Q_score", hue = "barcode", ax = ax[2])
+
+        # save the figure
+        plt.savefig(output[0], dpi = 300, bbox_inches = "tight")
