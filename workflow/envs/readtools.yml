@@ -2,5 +2,3 @@ channels:
  - bioconda
 dependencies:
  - samtools=1.17
- - pip
-  - pod5
