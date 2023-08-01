@@ -9,7 +9,8 @@ BARCODES = ["barcode01", "barcode02", "barcode03", "barcode04", "barcode05", "ba
 
 rule all:
     input:
-        expand("results/debarcoded/duplex/{barcode}.fastq", barcode = BARCODES)
+        expand("results/debarcoded/duplex/{barcode}.fastq", barcode = BARCODES),
+        "results/figures/duplex_stats.png"
 
 rule dorado_basecall:
     output:
@@ -103,7 +104,7 @@ rule duplex:
         slurm = "gpus=2"
     shell:
         """
-        {params.dorado} duplex --emite_fastq {params.model} {input} > {output}
+        {params.dorado} duplex --emit-fastq {params.model} {input} > {output}
         """
 
 rule duplex_statistics:
