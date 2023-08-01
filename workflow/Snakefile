@@ -91,20 +91,20 @@ rule pod5_filter:
     
 rule duplex:
     input:
-        "results/debarcoded/pod5//{barcode}/{barcode}.pod5"
+        "results/debarcoded/pod5/{barcode}/{barcode}.pod5"
     output:
         "results/debarcoded/duplex/{barcode}.fastq"
-    threads: 8
+    threads: 4
     params:
         dorado = config["dorado_path"],
         model = config["dorado_model"]
     resources:
         mem_mb = 128000,
         partition = "gpu",
-        slurm = "gpus=2"
+        slurm = "gpus=1"
     shell:
         """
-        {params.dorado} duplex --emit-fastq {params.model} {input} > {output}
+        {params.dorado} duplex --emit-fastq {params.model} results/debarcoded/pod5/{wildcards.barcode} > {output}
         """
 
 rule duplex_statistics:
