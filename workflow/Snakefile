@@ -150,3 +150,20 @@ rule plot_duplex_stats:
 
         # save the figure
         plt.savefig(output[0], dpi = 300, bbox_inches = "tight")
+
+rule dada2_preprocess:
+    input:
+        expand("results/debarcoded/duplex/{barcode}.fastq", barcode = BARCODES)
+    output:
+        "results/dada2/dada2.RData"
+    params:
+        silva = config["silva_path"]
+    conda:
+        "envs/dada2.yml"
+    threads: 16
+    resources:
+        mem_mb = 16000
+    shell:
+        """
+        Rscript workflows/scripts/dada2_preprocess.R results/debarcoded/duplex/ {params.silva} results/dada2/
+        """
