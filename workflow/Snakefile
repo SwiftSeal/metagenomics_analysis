@@ -99,7 +99,7 @@ rule duplex:
         dorado = config["dorado_path"],
         model = config["dorado_model"]
     resources:
-        mem_mb = 128000,
+        mem_mb = 32000,
         partition = "gpu",
         slurm = "gpus=1"
     shell:
@@ -124,11 +124,11 @@ rule duplex_statistics:
             # iterate through fastq file and calculate summary stats
             for record in SeqIO.parse(f, "fastq"):
                 length = len(record.seq)
-                GC = GC(record.seq)
+                GC_value = GC(record.seq)
                 Q_score = sum(record.letter_annotations["phred_quality"]) / length
 
                 # write record stats to file
-                o.write(f"{wildcards.barcode}\t{length}\t{GC}\t{Q_score}\n")
+                o.write(f"{wildcards.barcode}\t{length}\t{GC_value}\t{Q_score}\n")
 
 rule plot_duplex_stats:
     input:
