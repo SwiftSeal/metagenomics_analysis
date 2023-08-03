@@ -2,6 +2,9 @@
 
 from Bio import SeqIO
 from Bio.SeqUtils import GC
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 configfile: "config/config.yml"
 
@@ -9,8 +12,8 @@ BARCODES = ["barcode01", "barcode02", "barcode03", "barcode04", "barcode05", "ba
 
 rule all:
     input:
-        expand("results/debarcoded/duplex/{barcode}.fastq", barcode = BARCODES),
-        "results/figures/duplex_stats.png"
+        "results/figures/duplex_stats.png",
+        "results/dada2/dada2.RData"
 
 rule dorado_basecall:
     output:
@@ -21,9 +24,9 @@ rule dorado_basecall:
         model = config["dorado_model"],
         dorado = config["dorado_path"]
     resources:
-        mem_mb = 8000,
+        mem_mb = 16000,
         partition = "gpu",
-        slurm = "gpus=1"
+        slurm = "gpus=2"
     shell:
         """
         {params.dorado} basecaller -r {params.model} {params.input_dir} > {output.bam}
@@ -135,6 +138,9 @@ rule plot_duplex_stats:
         expand("results/debarcoded/duplex/{barcode}.stats", barcode = BARCODES)
     output:
         "results/figures/duplex_stats.png"
+    resources:
+        mem = 8000,
+        partition = "short"
     run:
         # merge all stats files into one dataframe
         df = pd.concat([pd.read_csv(f, sep = "\t") for f in input])
@@ -162,7 +168,7 @@ rule dada2_preprocess:
         "envs/dada2.yml"
     threads: 16
     resources:
-        mem_mb = 16000
+        mem_mb = 32000
     shell:
         """
         Rscript workflows/scripts/dada2_preprocess.R results/debarcoded/duplex/ {params.silva} results/dada2/
