@@ -12,8 +12,7 @@ BARCODES = ["barcode01", "barcode02", "barcode03", "barcode04", "barcode05", "ba
 
 rule all:
     input:
-        "results/figures/duplex_stats.png",
-        "results/dada2/dada2.RData"
+        expand("results/emu/{barcode}.sam", barcode = BARCODES)
 
 rule dorado_basecall:
     output:
@@ -63,113 +62,33 @@ rule debarcode:
         $APPS/ont-guppy/bin/guppy_barcoder -i results/dorado/sorted/ --save_path results/debarcoded/ --barcode_kits SQK-NBD114-24 -t 4 -q 0 --enable_trim_barcodes
         """
 
-rule extract_readID:
+rule filter_reads:
     input:
         "results/debarcoded/{barcode}/fastq_runid_unknown_0.fastq"
     output:
-        "results/debarcoded/{barcode}/readID.txt"
-    threads: 1
-    resources:
-        mem_mb = 2000,
-        partition = "short"
-    run:
-        for record in SeqIO.parse(input[0], "fastq"):
-            with open(output[0], "a") as f:
-                f.write(record.id + "\n")
-        
-        print("Done") # seems to crash without this?
-
-rule pod5_filter:
-    input:
-        "results/debarcoded/{barcode}/readID.txt"
-    output:
-        "results/debarcoded/pod5/{barcode}/{barcode}.pod5"
-    threads: 1
-    resources:
-        mem_mb = 8000
-    shell:
-        """
-        pod5 filter -r /mnt/shared/projects/jhi/soil-ecology/202307_root2res-pilot-ONT --ids {input} --output {output}
-        """
-    
-rule duplex:
-    input:
-        "results/debarcoded/pod5/{barcode}/{barcode}.pod5"
-    output:
-        "results/debarcoded/duplex/{barcode}.fastq"
-    threads: 4
-    params:
-        dorado = config["dorado_path"],
-        model = config["dorado_model"]
-    resources:
-        mem_mb = 32000,
-        partition = "gpu",
-        slurm = "gpus=1"
-    shell:
-        """
-        {params.dorado} duplex --emit-fastq {params.model} results/debarcoded/pod5/{wildcards.barcode} > {output}
-        """
-
-rule duplex_statistics:
-    input:
-        fastq = "results/debarcoded/duplex/{barcode}.fastq"
-    output:
-        stats = "results/debarcoded/duplex/{barcode}.stats"
-    threads: 1
-    resources:
-        mem_mb = 2000,
-        partition = "short"
-    run:
-        with open(input.fastq) as f, open(output.stats, "w") as o:
-            # write the header
-            o.write("barcode\tlength\tGC\tQ_score\n")
-
-            # iterate through fastq file and calculate summary stats
-            for record in SeqIO.parse(f, "fastq"):
-                length = len(record.seq)
-                GC_value = GC(record.seq)
-                Q_score = sum(record.letter_annotations["phred_quality"]) / length
-
-                # write record stats to file
-                o.write(f"{wildcards.barcode}\t{length}\t{GC_value}\t{Q_score}\n")
-
-rule plot_duplex_stats:
-    input:
-        expand("results/debarcoded/duplex/{barcode}.stats", barcode = BARCODES)
-    output:
-        "results/figures/duplex_stats.png"
-    resources:
-        mem = 8000,
-        partition = "short"
-    run:
-        # merge all stats files into one dataframe
-        df = pd.concat([pd.read_csv(f, sep = "\t") for f in input])
-
-        # filter any reads < 500bp or > 3000bp
-        df = df[(df["length"] > 500) & (df["length"] < 3000)]
-
-        # plot three subplots - kde of length, GC and Q_score
-        fig, ax = plt.subplots(3, 1, figsize = (5, 5))
-        sns.kdeplot(data = df, x = "length", hue = "barcode", ax = ax[0])
-        sns.kdeplot(data = df, x = "GC", hue = "barcode", ax = ax[1])
-        sns.kdeplot(data = df, x = "Q_score", hue = "barcode", ax = ax[2])
-
-        # save the figure
-        plt.savefig(output[0], dpi = 300, bbox_inches = "tight")
-
-rule dada2_preprocess:
-    input:
-        expand("results/debarcoded/duplex/{barcode}.fastq", barcode = BARCODES)
-    output:
-        "results/dada2/dada2.RData"
-    params:
-        silva = config["silva_path"]
+        "results/filtered/{barcode}.fastq"
     conda:
-        "envs/dada2.yml"
+        "envs/readtools.yml"
+    threads: 1
+    resources:
+        mem_mb = 4000,
+        partition = "short"
+    shell:
+        """
+        chopper -q 20 --minlength 1000 --maxlength 2000 < {input} > {output}
+        """
+
+rule emu:
+    input:
+        "results/filtered/{barcode}.fastq"
+    output:
+        "results/emu/{barcode}.sam"
+    conda:
+        "envs/emu.yml"
     threads: 16
     resources:
-        mem_mb = 32000
+        mem_mb = 16000
     shell:
         """
-        Rscript workflows/scripts/dada2_preprocess.R results/debarcoded/duplex/ {params.silva} results/dada2/
+        emu abundance --db silva --threads {threads} --output-dir results/emu --output-basename {wildcards.barcode} {input}
         """
