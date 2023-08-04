@@ -1,4 +1,4 @@
 channels:
  - bioconda
-dependencies
+dependencies:
  - emu=3.4.5
