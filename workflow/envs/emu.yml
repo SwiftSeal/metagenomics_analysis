@@ -2,3 +2,4 @@ channels:
  - bioconda
 dependencies:
  - emu=3.4.5
+ - seqkit=2.5.0

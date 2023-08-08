@@ -1,18 +1,13 @@
 # this is the snakemake pipeline for analysis the metagenomic data
 
-from Bio import SeqIO
-from Bio.SeqUtils import GC
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 configfile: "config/config.yml"
 
 BARCODES = ["barcode01", "barcode02", "barcode03", "barcode04", "barcode05", "barcode06"]
 
 rule all:
     input:
-        expand("results/emu/{barcode}.sam", barcode = BARCODES)
+        expand("results/emu/{barcode}.sam", barcode = BARCODES),
+        expand("results/emu_subsample/{barcode}_{proportion}_rel-abundance.tsv", barcode = BARCODES, proportion = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
 
 rule dorado_basecall:
     output:
@@ -87,8 +82,26 @@ rule emu:
         "envs/emu.yml"
     threads: 16
     resources:
-        mem_mb = 16000
+        mem_mb = 10000
     shell:
         """
         emu abundance --db silva --threads {threads} --output-dir results/emu --output-basename {wildcards.barcode} {input}
         """
+
+rule emu_subsample:
+    input:
+        "results/debarcoded/{barcode}/fastq_runid_unknown_0.fastq"
+    output:
+        subsampled_fastq = temp("results/emu_subsample/{barcode}_{proportion}.fastq"),
+        emu = "results/emu_subsample/{barcode}_{proportion}_rel-abundance.tsv"
+    conda:
+        "envs/emu.yml"
+    threads: 16
+    resources:
+        mem_mb = 10000
+    shell:
+        """
+        seqkit sample -p {proportion} {input} > {output.subsampled_fastq}
+        emu abundance --db silva --threads {threads} --output-dir results/emu_subsample --output-basename {wildcards.barcode}_{proportion} {output.subsampled_fastq}
+        """
+    
