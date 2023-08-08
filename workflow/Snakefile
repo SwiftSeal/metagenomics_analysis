@@ -6,7 +6,8 @@ BARCODES = ["barcode01", "barcode02", "barcode03", "barcode04", "barcode05", "ba
 
 rule all:
     input:
-        expand("results/emu/{barcode}-rel-abundance.tsv", barcode = BARCODES),
+        "results/top-10-genera.pdf",
+        "results/emu-data.tsv",
         expand("results/emu_subsample/{barcode}_{proportion}_rel-abundance.tsv", barcode = BARCODES, proportion = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
 
 rule dorado_basecall:
