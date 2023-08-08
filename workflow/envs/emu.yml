@@ -1,4 +1,5 @@
 channels:
  - bioconda
 dependencies:
- - bioconductor-dada2=1.28.0
+ - emu=3.4.5
+ - seqkit=2.5.0
