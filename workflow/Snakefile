@@ -6,7 +6,7 @@ BARCODES = ["barcode01", "barcode02", "barcode03", "barcode04", "barcode05", "ba
 
 rule all:
     input:
-        expand("results/emu/{barcode}.sam", barcode = BARCODES),
+        expand("results/emu/{barcode}-rel-abundance.tsv", barcode = BARCODES),
         expand("results/emu_subsample/{barcode}_{proportion}_rel-abundance.tsv", barcode = BARCODES, proportion = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
 
 rule dorado_basecall:
@@ -77,7 +77,7 @@ rule emu:
     input:
         "results/filtered/{barcode}.fastq"
     output:
-        "results/emu/{barcode}.sam"
+        "results/emu/{barcode}-rel-abundance.tsv"
     conda:
         "envs/emu.yml"
     threads: 16
@@ -104,4 +104,18 @@ rule emu_subsample:
         seqkit sample -p {proportion} {input} > {output.subsampled_fastq}
         emu abundance --db silva --threads {threads} --output-dir results/emu_subsample --output-basename {wildcards.barcode}_{proportion} {output.subsampled_fastq}
         """
-    
+
+rule clean_and_plot:
+    input:
+        expand("results/emu/{barcode}-rel-abundance.tsv", barcode = BARCODES)
+    output:
+        "results/top-10-genera.pdf",
+        "results/emu-data.tsv"
+    params:
+        emu_directory = "results/emu"
+    conda:
+        "envs/R.yml"
+    shell:
+        """
+        Rscript scripts/plotting.R {params.emu_directory}
+        """
