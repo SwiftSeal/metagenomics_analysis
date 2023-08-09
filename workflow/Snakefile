@@ -102,8 +102,8 @@ rule emu_subsample:
         mem_mb = 10000
     shell:
         """
-        seqkit sample -p {proportion} {input} > {output.subsampled_fastq}
-        emu abundance --db silva --threads {threads} --output-dir results/emu_subsample --output-basename {wildcards.barcode}_{proportion} {output.subsampled_fastq}
+        seqkit sample -p {wilcards.proportion} {input} > {output.subsampled_fastq}
+        emu abundance --db silva --threads {threads} --output-dir results/emu_subsample --output-basename {wildcards.barcode}_{wildcards.proportion} {output.subsampled_fastq}
         """
 
 rule clean_and_plot:
