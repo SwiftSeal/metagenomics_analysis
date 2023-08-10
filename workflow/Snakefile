@@ -82,8 +82,8 @@ rule get_emu_database:
         "envs/osfclient.yml"
     shell:
         """
-        osf -p 56uf7 fetch osfstorage/emu-prebuilt/{emu_database}.tar
-        tar -xvf {emu_database}.tar -C results/emudb/
+        osf -p 56uf7 fetch osfstorage/emu-prebuilt/{params.emu_database}.tar
+        tar -xvf {params.emu_database}.tar -C results/emudb/
         """
 
 rule emu:
