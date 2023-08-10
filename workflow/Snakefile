@@ -73,9 +73,23 @@ rule filter_reads:
         chopper -q 20 --minlength 1000 --maxlength 2000 < {input} > {output}
         """
 
+rule get_emu_database:
+    output:
+        "results/emudb/taxonomy.tsv"
+    params:
+        emu_database = "emu"
+    conda:
+        "envs/osfclient.yml"
+    shell:
+        """
+        osf -p 56uf7 fetch osfstorage/emu-prebuilt/{emu_database}.tar
+        tar -xvf {emu_database}.tar -C results/emudb/
+        """
+
 rule emu:
     input:
-        "results/filtered/{barcode}.fastq"
+        "results/filtered/{barcode}.fastq",
+        "results/emudb/taxonomy.tsv"
     output:
         "results/emu/{barcode}-rel-abundance.tsv"
     conda:
@@ -85,7 +99,7 @@ rule emu:
         mem_mb = 10000
     shell:
         """
-        emu abundance --db silva --threads {threads} --output-dir results/emu --output-basename {wildcards.barcode} {input}
+        emu abundance --db "results/emudb" --threads {threads} --output-dir results/emu --output-basename {wildcards.barcode} {input}
         """
 
 rule emu_subsample:
