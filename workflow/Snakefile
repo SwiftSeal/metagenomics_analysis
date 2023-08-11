@@ -121,7 +121,7 @@ rule emu_subsample:
 
 rule clean_and_plot:
     input:
-        expand("results/emu/{barcode}-rel-abundance.tsv", barcode = BARCODES)
+        expand("results/emu/{barcode})_rel-abundance.tsv", barcode = BARCODES)
     output:
         "results/top-10-genera.pdf",
         "results/emu-data.tsv"
