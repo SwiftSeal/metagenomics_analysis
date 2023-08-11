@@ -91,7 +91,7 @@ rule emu:
         "results/filtered/{barcode}.fastq",
         "results/emudb/taxonomy.tsv"
     output:
-        "results/emu/{barcode}-rel-abundance.tsv"
+        "results/emu/{barcode}_rel-abundance.tsv"
     conda:
         "envs/emu.yml"
     threads: 16
