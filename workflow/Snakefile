@@ -99,7 +99,7 @@ rule emu:
         mem_mb = 10000
     shell:
         """
-        emu abundance --db "results/emudb" --threads {threads} --output-dir results/emu --output-basename {wildcards.barcode} {input}
+        emu abundance --db "results/emudb" --threads {threads} --keep-counts --output-dir results/emu --output-basename {wildcards.barcode} {input}
         """
 
 rule emu_subsample:
@@ -121,7 +121,7 @@ rule emu_subsample:
 
 rule clean_and_plot:
     input:
-        expand("results/emu/{barcode})_rel-abundance.tsv", barcode = BARCODES)
+        expand("results/emu/{barcode}_rel-abundance.tsv", barcode = BARCODES)
     output:
         "results/top-10-genera.pdf",
         "results/emu-data.tsv"
@@ -131,5 +131,5 @@ rule clean_and_plot:
         "envs/R.yml"
     shell:
         """
-        Rscript scripts/plotting.R {params.emu_directory}
+        Rscript workflow/scripts/plotting.R {params.emu_directory}
         """
