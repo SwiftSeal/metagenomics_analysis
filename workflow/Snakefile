@@ -6,8 +6,10 @@ BARCODES = ["barcode01", "barcode02", "barcode03", "barcode04", "barcode05", "ba
 
 rule all:
     input:
-        "results/top-10-genera.pdf",
-        "results/emu-data.tsv"
+        "results/top-10-OTUs.png",
+        "results/emu-phyloseq.rds",
+        "results/emu-data.tsv",
+        "results/rarefaction-curve.png"
 
 rule dorado_basecall:
     output:
@@ -123,12 +125,17 @@ rule clean_and_plot:
     input:
         expand("results/emu/{barcode}_rel-abundance.tsv", barcode = BARCODES)
     output:
-        "results/top-10-genera.pdf",
-        "results/emu-data.tsv"
+        "results/top-10-OTUs.png",
+        "results/emu-phyloseq.rds",
+        "results/emu-data.tsv",
+        "results/rarefaction-curve.png"
     params:
         emu_directory = "results/emu"
     conda:
         "envs/R.yml"
+    resources:
+        mem_mb = 8000,
+        partition = "short"
     shell:
         """
         Rscript workflow/scripts/plotting.R {params.emu_directory}
