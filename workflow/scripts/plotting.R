@@ -10,8 +10,7 @@ emu_files <- list.files(path = emu_directory, pattern = "*_rel-abundance-thresho
 # aggregate data into single dataframe
 emu_data <- map_dfr(emu_files, ~read_tsv(.x) %>% mutate(sample = .x)) %>%
     mutate(sample = str_remove(sample, "_rel-abundance-threshold-0.0001.tsv")) %>%
-    mutate(sample str_remove(sample, emu_directory)) %>%
-    separate_wider_delim(lineage, names = c("domain", "phylum", "class", "order", "family", "genus", "species"), delim = ";", too_few = "align_start", too_many = "drop")
+    mutate(sample = str_remove(sample, emu_directory))
 
 # save data
 write_tsv(emu_data, "results/emu-data.tsv")
