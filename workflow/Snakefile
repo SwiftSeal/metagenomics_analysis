@@ -6,9 +6,10 @@ BARCODES = ["barcode01", "barcode02", "barcode03", "barcode04", "barcode05", "ba
 
 rule all:
     input:
-        "results/top-10-genera.pdf",
+        "results/top-10-OTUs.png",
+        "results/emu-phyloseq.rds",
         "results/emu-data.tsv",
-        expand("results/emu_subsample/{barcode}_{proportion}_rel-abundance.tsv", barcode = BARCODES, proportion = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+        "results/rarefaction-curve.png"
 
 rule dorado_basecall:
     output:
@@ -74,11 +75,25 @@ rule filter_reads:
         chopper -q 20 --minlength 1000 --maxlength 2000 < {input} > {output}
         """
 
+rule get_emu_database:
+    output:
+        "results/emudb/taxonomy.tsv"
+    params:
+        emu_database = config["emu_db"]
+    conda:
+        "envs/osfclient.yml"
+    shell:
+        """
+        osf -p 56uf7 fetch osfstorage/emu-prebuilt/{params.emu_database}.tar
+        tar -xvf {params.emu_database}.tar -C results/emudb/
+        """
+
 rule emu:
     input:
-        "results/filtered/{barcode}.fastq"
+        "results/filtered/{barcode}.fastq",
+        "results/emudb/taxonomy.tsv"
     output:
-        "results/emu/{barcode}-rel-abundance.tsv"
+        "results/emu/{barcode}_rel-abundance.tsv"
     conda:
         "envs/emu.yml"
     threads: 16
@@ -86,7 +101,7 @@ rule emu:
         mem_mb = 10000
     shell:
         """
-        emu abundance --db silva --threads {threads} --output-dir results/emu --output-basename {wildcards.barcode} {input}
+        emu abundance --db "results/emudb" --threads {threads} --keep-counts --output-dir results/emu --output-basename {wildcards.barcode} {input}
         """
 
 rule emu_subsample:
@@ -108,15 +123,20 @@ rule emu_subsample:
 
 rule clean_and_plot:
     input:
-        expand("results/emu/{barcode}-rel-abundance.tsv", barcode = BARCODES)
+        expand("results/emu/{barcode}_rel-abundance.tsv", barcode = BARCODES)
     output:
-        "results/top-10-genera.pdf",
-        "results/emu-data.tsv"
+        "results/top-10-OTUs.png",
+        "results/emu-phyloseq.rds",
+        "results/emu-data.tsv",
+        "results/rarefaction-curve.png"
     params:
         emu_directory = "results/emu"
     conda:
         "envs/R.yml"
+    resources:
+        mem_mb = 8000,
+        partition = "short"
     shell:
         """
-        Rscript scripts/plotting.R {params.emu_directory}
+        Rscript workflow/scripts/plotting.R {params.emu_directory}
         """

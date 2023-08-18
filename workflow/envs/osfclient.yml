@@ -1,0 +1,4 @@
+channels:
+ - conda-forge
+dependencies:
+ - osfclient=0.0.5
