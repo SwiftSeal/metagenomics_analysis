@@ -79,7 +79,7 @@ rule get_emu_database:
     output:
         "results/emudb/taxonomy.tsv"
     params:
-        emu_database = "emu"
+        emu_database = config["emu_db"]
     conda:
         "envs/osfclient.yml"
     shell:
