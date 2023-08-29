@@ -5,7 +5,7 @@ library(vegan)
 # read directory path from args
 args <- commandArgs(trailingOnly = TRUE)
 
-emu_directory <- args[1]
+emu_directory <- "results/emu/"
 
 emu_files <- list.files(path = emu_directory, pattern = "*_rel-abundance-threshold-0.0001.tsv", full.names = TRUE)
 
@@ -14,6 +14,10 @@ emu_data <- map_dfr(emu_files, ~read_tsv(.x) %>% mutate(sample = .x)) %>%
   mutate(sample = str_remove(sample, "_rel-abundance-threshold-0.0001.tsv")) %>%
   mutate(sample = str_remove(sample, emu_directory)) %>%
   rename_with(~str_replace_all(., " ", "_")) %>%
+  # split the lineage column into separate columns
+  separate_wider_delim(lineage, ";", names = c("domain", "phylum", "class", "order", "family", "genus", "species"), too_few = "align_start", too_many = "drop") %>%
+  # convert NA to empty string
+  replace(is.na(.), "") %>%
   mutate(tax_id = paste0("t", tax_id))
 
 # save data
@@ -21,7 +25,9 @@ write_tsv(emu_data, "results/emu-data.tsv")
 
 # construct OTU table
 emu_otu <- emu_data %>%
-  select(!(abundance:species_group)) %>%
+  # remove everything but tax_id, sample and estimated counts
+  select(!(abundance:species)) %>%
+  # estimated counts need to be rounded
   mutate(estimated_counts = round(estimated_counts, 0)) %>%
   pivot_wider(names_from = sample, values_from = estimated_counts) %>%
   column_to_rownames("tax_id") %>%
@@ -30,7 +36,7 @@ emu_otu <- emu_data %>%
 
 # construct taxonomy table
 emu_tax <- emu_data %>%
-  select(tax_id, species:phylum) %>%
+  select(tax_id, domain:species) %>%
   distinct() %>%
   column_to_rownames("tax_id")
 

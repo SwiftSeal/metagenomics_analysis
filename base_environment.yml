@@ -4,9 +4,9 @@ channels:
  - conda-forge
  - bioconda
 dependencies:
- - snakemake=7.30.2
- - cookiecutter=2.2.3
- - biopython=1.78
- - seaborn=0.12.2
- - matplotlib-base=3.7.2
- - pandas=2.0.3
+ - snakemake
+ - cookiecutter
+ - biopython
+ - seaborn
+ - matplotlib-base
+ - pandas
