@@ -1,9 +1,15 @@
-# NanoTax-Dorado: Next-Generation 16S Metabarcoding
+# Next-Generation 16S Metabarcoding
 
 16S metabarcoding is a method which can determine the composition of microbial communities within a given sample.
 This pipeline is specifically designed to streamline this process, turning raw sequencing data into a microbial community profile compatible with downstream analysis tools.
 At its core, the pipeline employs ONT's Dorado basecaller, ensuring rapid and accurate basecalling for the latest nanopore chemistry.
 Taxonomic assignments are handled via [Emu](https://gitlab.com/treangenlab/emu).
+
+## A note on conda
+
+It is highly recommend you install [mamba](https://github.com/conda-forge/miniforge#mambaforge) rather than relying on conda.
+It's a lot faster than mamba.
+Follow the instructions in the link to get started.
 
 ## Prerequisites 
 
@@ -12,7 +18,7 @@ To easily handle this, a base environment `base_environment.yml` has been provid
 To create this, run the following command:
 
 ```
-conda env create -f base_environment.yml
+mamba env create -f base_environment.yml
 ```
 
 This will create an environment `snakemake` which should have everything you need installed.
@@ -50,58 +56,11 @@ All configuration is handled by the `config/config.yaml` file:
 
 ## Output
 
-TBC
-
-## Pipeline Rules
-
-###	dorado_basecall
-
-Base calling is the process of translating the raw signal data produced by the sequencer into nucleotide sequences.
-This rule utilizes Dorado, the latest basecalling software developed specifically for Oxford Nanopore data.
- 
-A BAM file, which is a binary version of SAM (Sequence Alignment/Map) file.
-This file type stores nucleotide sequence data along with their qualities.
-
-### sort_bam
-
-    Description:
-    Once the raw data is base called and stored in a BAM file, it's essential to have it sorted. This rule uses SAMtools, a suite of programs for interacting with high-throughput sequencing data, to sort the BAM file.
-
-    Purpose:
-    Sorting ensures the alignments in the BAM file are organized by their position in the reference genome. This arrangement is crucial for efficient and accurate downstream analyses.
-
-### debarcode: Debarcoding
-
-    Description:
-    After base calling, the reads are often mixed with different identifiers called barcodes. Debarcoding segregates these reads based on their barcodes. The pipeline continues to use Guppy for this, which is also known for its demultiplexing capabilities.
-
-    Output:
-    A set of fastq files, where each file corresponds to a specific barcode.
-
-### filter_reads: Filtering Reads
-
-    Description:
-    It's essential to ensure the quality and reliability of the data being analyzed. This rule filters the reads based on specific parameters, ensuring only the most relevant and high-quality data is used for the subsequent steps.
-
-### emu: Taxonomic Assignment with Emu
-
-    Description:
-    One of the primary goals of metagenomic analysis is to identify what organisms or taxa are present in a sample. Emu 3.4.5 is a tool that assigns taxonomy to sequence data. In this pipeline, Emu processes the sequence data to output taxonomic graphs, showcasing the diversity and abundance of taxa in the samples.
-
-    Output:
-    Taxonomic graphs and tables, giving a detailed view of the microbial composition of the sample.
-
-### emu_subsample: Subsampling and Further Taxonomic Analysis with Emu
-
-    Description:
-    For comprehensive analysis or when dealing with vast amounts of data, it might be beneficial to subsample the sequence data. This rule takes a proportion of the original data for further taxonomic investigation with Emu. It ensures that the pipeline's results are consistent even with different data volumes.
-
-### clean_and_plot: Data Visualization
-
-    Description:
-    Visualization often makes data interpretation more intuitive. This rule uses R to curate and visualize the taxonomic distribution derived from the samples. Through various plots, researchers can quickly gauge the microbial diversity and prevalence in their samples.
-
-    Output:
-    Charts and graphs representing the taxonomic distribution of the analyzed samples.
+All results will be available under the `results/` directory.
+Results include rudimentary richness and rarefaction curve plots, as well as top 10 genera.
+A phyloseq object is also created and saved as an `.rds` object for easy integration into downstream analysis.
 
 A Sainsbury's Fellowship and Root2Res funded project
+
+![jhi](resources/jhi_adjusted.png)
+![gatsby](resource/../resources/logo-v.png)
